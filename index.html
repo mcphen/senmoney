@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Sen Money</title>
+  <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <h2 class="text-center">Sen Money</h2>
+  <form>
+    <div class="form-group">
+      <label for="email">Numéro de compte :</label>
+      <select class="form-control" id="sel1">
+        
+      </select>
+    </div>
+    
+    
+    <button type="button" onclick="menu()" class="btn btn-default" data-toggle="modal" data-target="#myModal">#221#</button>
+  </form>
+</div>
+
+<!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">MENU SENMONEY</h4>
+        </div>
+        <div class="modal-body">
+          <p>Taper le numéro du service choisie</p>
+          <ol>
+            <li>Solde de mon compte</li>
+            <li>Transfert d'argent</li>
+            <li>Paiement de facture</li>
+            <li>Options</li>
+          </ol>
+        </div>
+        <div class="modal-footer">
+          <input type="text" name="option" id="option_menu" class="form-control">
+          <br>
+          <button type="button" class="btn btn-primary" id="submit_menu">OK</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+
+
+  <!-- Modal -->
+  <div class="modal fade" id="myModalTransfert" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">TRANSFERT ARGENT</h4>
+        </div>
+        <form id="transfertform" method="post">
+        <div class="modal-body">
+          <label for="">Montant à transférer</label>
+          <input type="text" name="montant_transfert" id="montant_transfert" class="form-control">
+          <br>
+        </div>
+        <div class="modal-footer">
+          
+          <button type="submit" class="btn btn-primary" id="submit_transfert">TRANSFERER</button>
+        </div>
+      </form>
+      </div>
+      
+    </div>
+  </div>
+
+
+  <!-- Modal -->
+  <div class="modal fade" id="myModalUpdatePassword" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">OPTIONS</h4>
+        </div>
+        <form id="codeform" method="post">
+        <div class="modal-body">
+          <div id="story_transaction"></div>
+          <label for="">Modifier code Pin</label>
+          <input type="text" name="code_pin" id="code_pin" class="form-control">
+          <br>
+        </div>
+        <div class="modal-footer">
+          
+          <button type="submit" class="btn btn-primary" id="submit_code_pin">Modifier</button>
+        </div>
+      </form>
+      </div>
+      
+    </div>
+  </div>
+
+<script src="script.js"></script>
+
+<script type="text/javascript">
+  function menu(){
+    var val_selection = $('#sel1 option:selected').val(); // recuperation de la valeur selectionnee.
+    console.log(val_selection);
+    $("#submit_menu").click(function(){ // Lorsqu'on clique sur le button ok du popup
+
+      var option = $('#option_menu').val(); 
+      option = parseInt(option);
+      if(option==1){
+        afficherSolde(val_selection);
+      }else if(option==2){
+        transferer(val_selection);
+      }else if(option==4){
+        option_story(val_selection);
+      }
+  });
+  
+  }
+
+  function afficherSolde(val){
+
+    console.log("la valeur est "+val);
+    
+
+    $.ajax({url: "detail_compte.php?val="+val, success: function(result){
+       var choix = confirm(result);
+       if(choix){
+        $('#myModal').modal('show'); // retour au menu
+
+       }
+    }});
+  }
+
+  /*
+   FONCTION POUR TRANSFERER DE L'ARGENT
+  */
+
+  function transferer(val){
+    $('#myModalTransfert').modal('show');
+
+    $("#transfertform").submit(function(e){ // Lorsqu'on clique sur le button ok du popup
+      e.preventDefault();
+      var montant_transfert = $('#montant_transfert').val(); 
+
+      if(montant_transfert !=''){ // SI LE MONTANT N'EST PAS VIDE
+
+
+        $.ajax({
+          type: "POST",
+          url: "transfert.php",
+          data: {
+            idcompte: val,
+            montant: montant_transfert,
+          },
+          success: function (response) {
+
+            var choix = confirm(response);
+            if(choix){
+              $('#myModalTransfert').modal('hide');
+              $('#myModal').modal('show'); // retour au menu
+
+            }else{
+              $('#myModalTransfert').modal('hide');
+              $('#myModal').modal('hide');
+            }
+           
+          }
+        });
+
+        
+
+      }
+           
+    });
+  }
+
+  function option_story(val){
+    $('#myModalUpdatePassword').modal('show');
+
+    $.ajax({url: "story.php?val="+val, success: function(result){
+       
+        $('#story_transaction').html(result); 
+
+       
+    }});
+
+
+    $("#codeform").submit(function(e){ // Lorsqu'on clique sur le button ok du popup
+      e.preventDefault();
+      var code_pin = $('#code_pin').val(); 
+
+      if(code_pin !=''){ // SI LE MONTANT N'EST PAS VIDE
+
+
+        $.ajax({
+          type: "POST",
+          url: "update_codepin.php",
+          data: {
+            idcompte: val,
+            code_pin: code_pin,
+          },
+          success: function (response) {
+
+            var choix = confirm(response);
+            if(choix){
+              $('#myModalUpdatePassword').modal('hide');
+              $('#myModal').modal('show'); // retour au menu
+
+            }else{
+              $('#myModalUpdatePassword').modal('hide');
+              $('#myModal').modal('hide');
+            }
+           
+          }
+        });
+
+        
+
+      }
+           
+    });
+  }
+</script>
+
+</body>
+</html>
